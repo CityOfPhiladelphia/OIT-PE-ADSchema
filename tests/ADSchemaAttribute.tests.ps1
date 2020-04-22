@@ -1,5 +1,3 @@
-
-
 Describe "ADSchema Attribute Functions" {
     Context "Get-ADSchemaAttribute" {
         It "exists as a function in the module" {
@@ -25,4 +23,3 @@ Describe "ADSchema Attribute Functions" {
     }
 
 }
-

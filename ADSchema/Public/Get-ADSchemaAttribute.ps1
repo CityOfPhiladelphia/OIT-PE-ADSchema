@@ -17,8 +17,7 @@ Function Get-ADSchemaAttribute {
         [Parameter()]
         $Class = 'user'
     )
-    $schema = GetADSchema
-    $attributes = $schema.FindClass($Class).mandatoryproperties 
-    $attributes += $schema.FindClass($Class).optionalproperties
+    $attributes = (ADSchemaFindClass -Class $Class).mandatoryproperties 
+    $attributes += (ADSchemaFindClass -Class $Class).optionalproperties
     return $attributes | Where-Object {$_.Name -like $Attribute}
 }
