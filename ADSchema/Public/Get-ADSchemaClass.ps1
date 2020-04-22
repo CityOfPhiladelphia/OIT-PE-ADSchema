@@ -20,7 +20,7 @@ Function Get-ADSchemaClass {
         $Class = '*'
     )
     
-    $schema = [directoryservices.activedirectory.activedirectoryschema]::getcurrentschema()
+    $schema = GetADSchema
     $classes = $schema.FindAllClasses()
     return $classes | Where-Object {$_.Name -like $Class}
 }

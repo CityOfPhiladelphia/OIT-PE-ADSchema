@@ -17,7 +17,7 @@ Function Get-ADSchemaAttribute {
         [Parameter()]
         $Class = 'user'
     )
-    $schema = [directoryservices.activedirectory.activedirectoryschema]::getcurrentschema()
+    $schema = GetADSchema
     $attributes = $schema.FindClass($Class).mandatoryproperties 
     $attributes += $schema.FindClass($Class).optionalproperties
     return $attributes | Where-Object {$_.Name -like $Attribute}
