@@ -9,15 +9,34 @@
    Get-ADSchemaAttribute -class asTestClass -attribute asFavoriteColor
 #>
 Function Get-ADSchemaAttribute {
-    param(
-        
-        [Parameter()]
-        $Attribute = '*',
+   param(
+      [Parameter()]
+      $Attribute = '*',
 
-        [Parameter()]
-        $Class = 'user'
-    )
-    $attributes = (ADSchemaFindClass -Class $Class).mandatoryproperties 
-    $attributes += (ADSchemaFindClass -Class $Class).optionalproperties
+      [Parameter()]
+      $Class = 'user',
+
+      [Parameter()]
+      $ComputerName,
+
+      [ValidateNotNull()]
+      [System.Management.Automation.PSCredential]
+      [System.Management.Automation.Credential()]
+      $Credential = [System.Management.Automation.PSCredential]::Empty
+   )
+   
+   $FindClassParams = @{
+      Class = $Class
+   }
+   if ($ComputerName) {
+      $FindClassParams['ComputerName'] = $ComputerName
+   }
+   if ($Credential -ne [System.Management.Automation.PSCredential]::Empty) {
+      $FindClassParams['Credential'] = $Credential
+   }
+
+    $attributes = FindClassMandatoryProps @FindClassParams
+    $attributes += FindClassOptionalProps @FindClassParams
+
     return $attributes | Where-Object {$_.Name -like $Attribute}
 }

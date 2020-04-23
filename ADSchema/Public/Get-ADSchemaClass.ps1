@@ -20,6 +20,6 @@ Function Get-ADSchemaClass {
         $Class = '*'
     )
     
-    $classes = ADSchemaFindAllClasses
+    $classes = FindAllClasses
     return $classes | Where-Object {$_.Name -like $Class}
 }
