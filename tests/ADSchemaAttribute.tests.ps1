@@ -14,7 +14,7 @@ InModuleScope ADSchema {
             }
 
             It "calls FindClassMandatoryProps and FindClassOptionalProps" {
-                Assert-VerifiableMocks
+                Assert-VerifiableMock
             }
 
             <# It "calls FindClassMandatoryProps and FindClassOptionalProps when ComputerName and Credential exist" {
