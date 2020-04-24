@@ -54,37 +54,35 @@
 #>
 
 Function New-ADSchemaAttribute {
-
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'High')]
     param(
+      [Parameter(Mandatory,ValueFromPipelinebyPropertyName, ParameterSetName = 'basic')]
+      [String]
+      $Name,
 
-        [Parameter(Mandatory,ValueFromPipelinebyPropertyName, ParameterSetName = 'basic')]
-        [String]
-        $Name,
+      [Parameter(Mandatory, ValueFromPipelinebyPropertyName, ParameterSetName = 'basic')]
+      [Alias('AdminDescription')]
+      [String]
+      $Description,
 
-        [Parameter(Mandatory, ValueFromPipelinebyPropertyName, ParameterSetName = 'basic')]
-        [Alias('AdminDescription')]
-        [String]
-        $Description,
+      [Parameter(ValueFromPipelinebyPropertyName, ParameterSetName = 'basic')]
+      [Alias('SingleValued')]
+      [Boolean]
+      $IsSingleValued = $True,
 
-        [Parameter(ValueFromPipelinebyPropertyName, ParameterSetName = 'basic')]
-        [Alias('SingleValued')]
-        [Boolean]
-        $IsSingleValued = $True,
+      [Parameter(Mandatory, ValueFromPipelinebyPropertyName, ParameterSetName = 'basic')]
+      [ValidateSet('String','StringOctet','DN','Int','GeneralizedTime','Boolean')]
+      [String]
+      $AttributeType ,
 
-        [Parameter(Mandatory, ValueFromPipelinebyPropertyName, ParameterSetName = 'basic')]
-        [ValidateSet('String','StringOctet','DN','Int','GeneralizedTime','Boolean')]
-        [String]
-        $AttributeType ,
+      [Parameter(ValueFromPipelinebyPropertyName,ParameterSetName = 'basic')]
+      [Alias('OID')]
+      [String]
+      $AttributeID = (New-ADSchemaTestOID),
 
-        [Parameter(ValueFromPipelinebyPropertyName,ParameterSetName = 'basic')]
-        [Alias('OID')]
-        [String]
-        $AttributeID = (New-ADSchemaTestOID),
-
-        [Parameter(ValueFromPipelineByPropertyName,ParameterSetName = 'advanced')]
-        [String]
-        $SchemaAttributeHashTable
+      [Parameter(ValueFromPipelineByPropertyName,ParameterSetName = 'advanced')]
+      [String]
+      $SchemaAttributeHashTable
     )
 
     BEGIN {}
@@ -93,22 +91,22 @@ Function New-ADSchemaAttribute {
   
         $schemaPath = (Get-ADRootDSE).schemaNamingContext       
         $type = 'attributeSchema'
-        if($SchemaAttributeHashTable){
-            $attributes = $SchemaAttributeHashTable
-        }
-        else {
-             # based on https://technet.microsoft.com/en-us/library/cc961740.aspx
-            switch ($AttributeType) {
-                'String'            {$attributeSyntax = '2.5.5.4';  $omSyntax = 20}
-                'StringOctet'       {$attributeSyntax = '2.5.5.10'; $omSyntax = 4}
-                'DN'                {$attributeSyntax = '2.5.5.1';  $omSyntax = 127}
-                'Int'               {$attributeSyntax = '2.5.5.9';  $omSyntax = 2}
-                'GeneralizedTime'   {$attributeSyntax = '2.5.5.11'; $omSyntax = 24}
-                'Boolean'           {$attributeSyntax = '2.5.5.8';  $omSyntax = 1}
-                Default {}
-            }
+        
+        if ($SchemaAttributeHashTable) {
+          $attributes = $SchemaAttributeHashTable
+        } else {
+          # based on https://technet.microsoft.com/en-us/library/cc961740.aspx
+          switch ($AttributeType) {
+            'String'            {$attributeSyntax = '2.5.5.4';  $omSyntax = 20}
+            'StringOctet'       {$attributeSyntax = '2.5.5.10'; $omSyntax = 4}
+            'DN'                {$attributeSyntax = '2.5.5.1';  $omSyntax = 127}
+            'Int'               {$attributeSyntax = '2.5.5.9';  $omSyntax = 2}
+            'GeneralizedTime'   {$attributeSyntax = '2.5.5.11'; $omSyntax = 24}
+            'Boolean'           {$attributeSyntax = '2.5.5.8';  $omSyntax = 1}
+            Default {}
+          }
             
-            $attributes = @{
+          $attributes = @{
             lDAPDisplayName = $Name;
             attributeId = $AttributeID;
             oMSyntax = $omSyntax;
@@ -116,14 +114,14 @@ Function New-ADSchemaAttribute {
             isSingleValued = $IsSingleValued;
             adminDescription = $Description;
             searchflags = 1
+          }
         }
-        }
-        
-    
+           
         $ConfirmationMessage = "$schemaPath. This cannot be undone"
         $Caption = "Updating Active Directory Schema. Creating attribute $Name"
-        if($AttributeID.StartsWith('1.2.840.113556.1.8000.2554')){
-           Write-Warning 'You are using a test OID. For Production use, use an OID with your registered PEN. See help about_adschema for more details. ' 
+
+        if ($AttributeID.StartsWith('1.2.840.113556.1.8000.2554')) {
+          Write-Warning 'You are using a test OID. For Production use, use an OID with your registered PEN. See help about_adschema for more details. ' 
         }
        
         if ($PSCmdlet.ShouldProcess($ConfirmationMessage, $Caption)) {
@@ -132,5 +130,4 @@ Function New-ADSchemaAttribute {
     }
 
     END {}
-    
 }
