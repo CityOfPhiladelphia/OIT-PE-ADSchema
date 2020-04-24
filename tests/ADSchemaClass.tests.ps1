@@ -1,27 +1,33 @@
+InModuleScope ADSchema {
+    Describe "ADSchema Class Functions" {
+        $password = ConvertTo-SecureString "TestPassword" -AsPlainText -Force
+        $testcred = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList ('testuser',$password)
 
+        Mock -ModuleName ADSchema FindAllClasses {} -Verifiable
 
-
-Describe "ADSchema Class Functions" {
-    Context "Get-ADSchemaClass" {
-        It "exists as a function in the module" {
+        It "Get-ADSchemaClass exists as a function in the module" {
             (Get-Command Get-ADSchemaClass).count | should be 1
         }
 
-        It "returns a schema object - test uses user class" {
-            (Get-ADSchemaClass -Class 'User').Oid | Should Be '1.2.840.113556.1.5.9'
-        }
-
-        It "accepts wildcards" {
-            ((Get-ADSchemaClass -class use*) | 
-                    Where-Object {$_.Name -eq 'User'}).count | 
-                Should Be 1
-        }
-    }
-
-    Context "New-ADSchemaAttribute" {
-        It "exists as a function in the module" {
+        It "New-ADSchemaClass exists as a function in the module" {
             (Get-Command New-ADSchemaClass).count | should be 1        
         }
-    }
 
+        Context "Get-ADSchemaClass without credentials" {            
+            $result = Get-ADSchemaClass -Class User
+
+            It "calls FindAllClasses" {
+                Assert-VerifiableMock
+            }
+        }
+
+        Context "Get-ADSchemaClass with ComputerName and Credential" {            
+            $result = Get-ADSchemaClass -Class User -ComputerName dc -Credential $testcred
+
+            It "calls FindAllClasses" {
+                Assert-VerifiableMock
+            }
+        }
+
+    }
 }
