@@ -9,6 +9,24 @@
 #>
 
 Function Invoke-ADSchemaReload {
-   $dse =  Get-ADRootDSE
-   $dse.schemaUpdateNow = $true
+    param(
+        [Parameter()]
+        $ComputerName,
+
+        [ValidateNotNull()]
+        [System.Management.Automation.PSCredential]
+        [System.Management.Automation.Credential()]
+        $Credential = [System.Management.Automation.PSCredential]::Empty
+    )
+
+    $ADRootDSEParams = @{}
+    if ($ComputerName) {
+        $ADRootDSEParams['ComputerName'] = $ComputerName
+    }
+    if ($Credential -ne [System.Management.Automation.PSCredential]::Empty) {
+        $ADRootDSEParams['Credential'] = $Credential
+    }
+
+    $dse =  Get-ADRootDSE @ADRootDSEParams
+    $dse.schemaUpdateNow = $true
 }
