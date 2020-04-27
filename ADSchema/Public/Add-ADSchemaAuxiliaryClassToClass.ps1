@@ -59,18 +59,21 @@ Function Add-ADSchemaAuxiliaryClassToClass {
         $GetADObjectParams2['ComputerName'] = $ComputerName
         $SetADObjectParams['Credential'] = $Credential
     }
-
+    # Get the schema path
     $schemaPath = (Get-ADRootDSE @ADRootDSEParams).schemaNamingContext
 
+    # Get the auxiliary class
     $GetADObjectParams1['SearchBase'] = $schemaPath
     $GetADObjectParams1['Filter'] = "name -eq '$AuxiliaryClass'"
     $GetADObjectParams1['Properties'] = 'governsID'
     $auxClass = Get-ADObject @GetADObjectParams1
 
+    # Get the class the auxiliary class will be added to
     $GetADObjectParams2['SearchBase'] = $schemaPath
     $GetADObjectParams2['Filter'] = "name -eq '$AuxiliaryClass'"
     $classToAddTo = Get-ADObject @GetADObjectParams2
 
+    # Add the auxiliary class to the class
     $SetADObjectParams['Add'] = @{ auxiliaryClass = $($auxClass.governsID) }
     $classToAddTo | Set-ADObject @SetADObjectParams
 }
