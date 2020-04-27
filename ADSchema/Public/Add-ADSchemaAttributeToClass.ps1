@@ -23,11 +23,42 @@
 #>
 
 Function Add-ADSchemaAttributeToClass {
-param(
-    $Attribute,
-    $Class
-)
-    $schemaPath = (Get-ADRootDSE).schemaNamingContext  
-    $Schema = Get-ADObject -SearchBase $schemaPath -Filter "name -eq `'$Class`'"
-    $Schema | Set-ADObject -Add @{mayContain = $Attribute}
+    param(
+        $Attribute,
+
+        $Class,
+
+        [Parameter()]
+        $ComputerName,
+  
+        [ValidateNotNull()]
+        [System.Management.Automation.PSCredential]
+        [System.Management.Automation.Credential()]
+        $Credential = [System.Management.Automation.PSCredential]::Empty
+    )
+
+    # Stage splats for all commands that can accept ComputerName and Credential parameters
+    $ADRootDSEParams = @{}
+    $GetADObjectParams = @{}
+    $SetADObjectParams = @{}
+    # If ComputerName or Credential is defined, add them to all splats for commands that will accept them.
+    if ($ComputerName) {
+        $ADRootDSEParams['ComputerName'] = $ComputerName
+        $GetADObjectParams['ComputerName'] = $ComputerName
+        $SetADObjectParams['ComputerName'] = $ComputerName
+    }
+    if ($Credential -ne [System.Management.Automation.PSCredential]::Empty) {
+        $ADRootDSEParams['Credential'] = $Credential
+        $GetADObjectParams['Credential'] = $Credential
+        $SetADObjectParams['Credential'] = $Credential
+    }
+
+    $schemaPath = (Get-ADRootDSE @ADRootDSEParams).schemaNamingContext
+
+    $GetADObjectParams['SearchBase'] = $schemaPath
+    $GetADObjectParams['Filter'] = "name -eq '$Class'"
+    $Schema = Get-ADObject @GetADObjectParams
+
+    $SetADObjectParams['Add'] = @{mayContain = $Attribute }
+    $Schema | Set-ADObject @SetADObjectParams
 }

@@ -30,11 +30,47 @@ Function Add-ADSchemaAuxiliaryClassToClass {
         $AuxiliaryClass,
 
         [Parameter()]
-        $Class
+        $Class,
+
+        [Parameter()]
+        $ComputerName,
+  
+        [ValidateNotNull()]
+        [System.Management.Automation.PSCredential]
+        [System.Management.Automation.Credential()]
+        $Credential = [System.Management.Automation.PSCredential]::Empty
     )
 
-    $schemaPath = (Get-ADRootDSE).schemaNamingContext  
-    $auxClass = Get-ADObject -SearchBase $schemaPath -Filter "name -eq `'$AuxiliaryClass`'" -Properties governsID
-    $classToAddTo  = Get-ADObject -SearchBase $schemaPath -Filter "name -eq `'$Class`'"
-    $classToAddTo | Set-ADObject -Add @{auxiliaryClass = $($auxClass.governsID)}
+    # Stage splats for all commands that can accept ComputerName and Credential parameters
+    $ADRootDSEParams = @{ }
+    $GetADObjectParams1 = @{ }
+    $GetADObjectParams2 = @{ }
+    $SetADObjectParams = @{ }
+    # If ComputerName or Credential is defined, add them to all splats for commands that will accept them.
+    if ($ComputerName) {
+        $ADRootDSEParams['ComputerName'] = $ComputerName
+        $GetADObjectParams1['ComputerName'] = $ComputerName
+        $GetADObjectParams2['ComputerName'] = $ComputerName
+        $SetADObjectParams['ComputerName'] = $ComputerName
+    }
+    if ($Credential -ne [System.Management.Automation.PSCredential]::Empty) {
+        $ADRootDSEParams['Credential'] = $Credential
+        $GetADObjectParams1['Credential'] = $Credential
+        $GetADObjectParams2['ComputerName'] = $ComputerName
+        $SetADObjectParams['Credential'] = $Credential
+    }
+
+    $schemaPath = (Get-ADRootDSE @ADRootDSEParams).schemaNamingContext
+
+    $GetADObjectParams1['SearchBase'] = $schemaPath
+    $GetADObjectParams1['Filter'] = "name -eq '$AuxiliaryClass'"
+    $GetADObjectParams1['Properties'] = 'governsID'
+    $auxClass = Get-ADObject @GetADObjectParams1
+
+    $GetADObjectParams2['SearchBase'] = $schemaPath
+    $GetADObjectParams2['Filter'] = "name -eq '$AuxiliaryClass'"
+    $classToAddTo = Get-ADObject @GetADObjectParams2
+
+    $SetADObjectParams['Add'] = @{ auxiliaryClass = $($auxClass.governsID) }
+    $classToAddTo | Set-ADObject @SetADObjectParams
 }
