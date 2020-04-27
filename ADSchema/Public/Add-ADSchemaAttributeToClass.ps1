@@ -43,9 +43,9 @@ Function Add-ADSchemaAttributeToClass {
     $SetADObjectParams = @{}
     # If ComputerName or Credential is defined, add them to all splats for commands that will accept them.
     if ($ComputerName) {
-        $ADRootDSEParams['ComputerName'] = $ComputerName
-        $GetADObjectParams['ComputerName'] = $ComputerName
-        $SetADObjectParams['ComputerName'] = $ComputerName
+        $ADRootDSEParams['Server'] = $ComputerName
+        $GetADObjectParams['Server'] = $ComputerName
+        $SetADObjectParams['Server'] = $ComputerName
     }
     if ($Credential -ne [System.Management.Automation.PSCredential]::Empty) {
         $ADRootDSEParams['Credential'] = $Credential

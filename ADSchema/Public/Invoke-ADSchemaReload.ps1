@@ -21,7 +21,7 @@ Function Invoke-ADSchemaReload {
 
     $ADRootDSEParams = @{}
     if ($ComputerName) {
-        $ADRootDSEParams['ComputerName'] = $ComputerName
+        $ADRootDSEParams['Server'] = $ComputerName
     }
     if ($Credential -ne [System.Management.Automation.PSCredential]::Empty) {
         $ADRootDSEParams['Credential'] = $Credential

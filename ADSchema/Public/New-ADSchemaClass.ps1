@@ -63,8 +63,8 @@ Function New-ADSchemaClass {
     $NewADObjectParams = @{}
     # If ComputerName or Credential is defined, add them to all splats for commands that will accept them.
     if ($ComputerName) {
-        $ADRootDSEParams['ComputerName'] = $ComputerName
-        $NewADObjectParams['ComputerName'] = $ComputerName
+        $ADRootDSEParams['Server'] = $ComputerName
+        $NewADObjectParams['Server'] = $ComputerName
     }
     if ($Credential -ne [System.Management.Automation.PSCredential]::Empty) {
         $ADRootDSEParams['Credential'] = $Credential
