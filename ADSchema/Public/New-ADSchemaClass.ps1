@@ -29,63 +29,85 @@
 #>
 Function New-ADSchemaClass {
 
-    [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'High')]
-    param(
+  [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'High')]
+  param(
+    [Parameter(Mandatory, ValueFromPipelinebyPropertyName)]
+    $Name,
 
-        [Parameter(Mandatory, ValueFromPipelinebyPropertyName)]
-        $Name,
+    [Parameter(Mandatory, ValueFromPipelinebyPropertyName)]
+    [Alias('Description')]
+    $AdminDescription,
 
-        [Parameter(Mandatory, ValueFromPipelinebyPropertyName)]
-        [Alias('Description')]
-        $AdminDescription,
+    [Parameter(ValueFromPipelinebyPropertyName)]
+    [ValidateSet("Auxiliary", "Abstract", "Structural", "88 Class")]
+    $Category = 'Auxiliary',
 
-        [Parameter(ValueFromPipelinebyPropertyName)]
-        [ValidateSet("Auxiliary","Abstract","Structural","88 Class")]
-        $Category = 'Auxiliary',
+    [Parameter(ValueFromPipelinebyPropertyName)]
+    [Alias('OID')]
+    $AttributeID = (New-ADSchemaTestOID),
 
-        [Parameter(ValueFromPipelinebyPropertyName)]
-        [Alias('OID')]
-        $AttributeID = (New-ADSchemaTestOID)
-    )
+    [Parameter()]
+    $ComputerName,
 
-    BEGIN {}
+    [ValidateNotNull()]
+    [System.Management.Automation.PSCredential]
+    [System.Management.Automation.Credential()]
+    $Credential = [System.Management.Automation.PSCredential]::Empty
+  )
 
-    PROCESS {
-  
-        $schemaPath = (Get-ADRootDSE).schemaNamingContext       
-        
+  BEGIN { }
 
-        switch ($Category) {
-            'Auxiliary'     {$ObjectCategory = 3}
-            'Abstract'      {$ObjectCategory = 2}
-            'Structural'    {$ObjectCategory = 1}
-            '88 Class'      {$ObjectCategory = 0}
-        }
+  PROCESS {
+    # Stage splats for all commands that can accept ComputerName and Credential parameters
+    $ADRootDSEParams = @{}
+    $NewADObjectParams = @{}
+    # If ComputerName or Credential is defined, add them to all splats for commands that will accept them.
+    if ($ComputerName) {
+        $ADRootDSEParams['ComputerName'] = $ComputerName
+        $NewADObjectParams['ComputerName'] = $ComputerName
+    }
+    if ($Credential -ne [System.Management.Automation.PSCredential]::Empty) {
+        $ADRootDSEParams['Credential'] = $Credential
+        $NewADObjectParams['Credential'] = $Credential
+    }
+    # Get schema path
+    $schemaPath = (Get-ADRootDSE @ADRootDSEParams).schemaNamingContext        
 
-        $attributes = @{
-            governsId = $AttributeID
-            adminDescription = $AdminDescription
-            objectClass =  'classSchema'
-            ldapDisplayName = $Name
-            adminDisplayName =  $Name
-            objectClassCategory = $ObjectCategory
-            systemOnly =  $FALSE
-            # subclassOf: top
-            subclassOf = "2.5.6.0"
-            # rdnAttId: cn
-            rdnAttId = "2.5.4.3"
-        }
-    
-        $ConfirmationMessage = "$Name in $schemaPath. This cannot be undone"
-        $Caption = 'Adding a new class to Active Directory Schema'
-        if($AttributeID.StartsWith('1.2.840.113556.1.8000.2554')){
-           Write-Warning 'You are using a test OID. For Production use, use an OID with your registered PEN. See help about_adschema for more details. ' 
-        }
-        if ($PSCmdlet.ShouldProcess($ConfirmationMessage, $Caption)) {
-            New-ADObject -Name $Name -Type 'classSchema' -Path $schemapath -OtherAttributes $attributes  
-        }
+    switch ($Category) {
+      'Auxiliary' { $ObjectCategory = 3 }
+      'Abstract' { $ObjectCategory = 2 }
+      'Structural' { $ObjectCategory = 1 }
+      '88 Class' { $ObjectCategory = 0 }
     }
 
-    END {}
+    $attributes = @{
+      governsId           = $AttributeID
+      adminDescription    = $AdminDescription
+      objectClass         = 'classSchema'
+      ldapDisplayName     = $Name
+      adminDisplayName    = $Name
+      objectClassCategory = $ObjectCategory
+      systemOnly          = $FALSE
+      # subclassOf: top
+      subclassOf          = "2.5.6.0"
+      # rdnAttId: cn
+      rdnAttId            = "2.5.4.3"
+    }
+    
+    $ConfirmationMessage = "$Name in $schemaPath. This cannot be undone"
+    $Caption = 'Adding a new class to Active Directory Schema'
+    if ($AttributeID.StartsWith('1.2.840.113556.1.8000.2554')) {
+      Write-Warning 'You are using a test OID. For Production use, use an OID with your registered PEN. See help about_adschema for more details. ' 
+    }
+    if ($PSCmdlet.ShouldProcess($ConfirmationMessage, $Caption)) {
+      $NewADObjectParams['Name'] = $Name
+      $NewADObjectParams['Type'] = 'classSchema'
+      $NewADObjectParams['Path'] = $schemaPath
+      $NewADObjectParams['OtherAttributes'] = $attributes
+      New-ADObject @NewADObjectParams
+    }
+  }
+
+  END { }
     
 }
