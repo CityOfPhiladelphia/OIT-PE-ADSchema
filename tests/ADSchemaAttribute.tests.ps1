@@ -3,9 +3,6 @@ InModuleScope ADSchema {
         $password = ConvertTo-SecureString "TestPassword" -AsPlainText -Force
         $testcred = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList ('testuser',$password)
 
-        Mock -ModuleName ADSchema FindClassMandatoryProps {} -Verifiable
-        Mock -ModuleName ADSchema FindClassOptionalProps {} -Verifiable
-
         It "Get-ADSchemaAttribute exists as a function in the module" {
             (Get-Command Get-ADSchemaAttribute).count | should be 1
         }
@@ -15,7 +12,9 @@ InModuleScope ADSchema {
             
         }
 
-        Context "Get-ADSchemaAttribute without credentials" {            
+        Context "Get-ADSchemaAttribute without credentials" {  
+            Mock -ModuleName ADSchema -Command FindClassMandatoryProps {} -Verifiable -ParameterFilter {$Class -eq 'User'}
+            Mock -ModuleName ADSchema -Command FindClassOptionalProps {} -Verifiable -ParameterFilter {$Class -eq 'User'}  
             $result = Get-ADSchemaAttribute -Class User -Attribute CN
 
             It "calls FindClassMandatoryProps and FindClassOptionalProps" {
@@ -23,12 +22,16 @@ InModuleScope ADSchema {
             }
         }
 
-        Context "Get-ADSchemaAttribute with ComputerName and Credential" {            
+        Context "Get-ADSchemaAttribute with ComputerName and Credential" {
+            Mock -ModuleName ADSchema -Command FindClassMandatoryProps {} -Verifiable -ParameterFilter {$Class -eq 'User' -and $ComputerName -eq 'dc' -and $Credential -eq $testcred}
+            Mock -ModuleName ADSchema -Command FindClassOptionalProps {} -Verifiable -ParameterFilter {$Class -eq 'User' -and $ComputerName -eq 'dc' -and $Credential -eq $testcred}
             $result = Get-ADSchemaAttribute -Class User -Attribute CN -ComputerName dc -Credential $testcred
 
             It "calls FindClassMandatoryProps and FindClassOptionalProps" {
                 Assert-VerifiableMock
             }
         }
+
+
     }
 }
