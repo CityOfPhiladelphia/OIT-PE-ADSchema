@@ -14,8 +14,8 @@ InModuleScope ADSchema {
         }
 
         Context "Get-ADSchemaClass without credentials" {        
-            Mock -ModuleName ADSchema FindAllClasses {} -Verifiable -ParameterFilter {$Class = 'User'}    
-            $result = Get-ADSchemaClass -Class User
+            Mock -ModuleName ADSchema FindAllClasses {} -Verifiable  
+            $result = Get-ADSchemaClass -Class 'User'
 
             It "calls FindAllClasses" {
                 Assert-VerifiableMock
@@ -23,8 +23,8 @@ InModuleScope ADSchema {
         }
 
         Context "Get-ADSchemaClass with ComputerName and Credential" {
-            Mock -ModuleName ADSchema FindAllClasses {} -Verifiable -ParameterFilter {$Class = 'User' -and $ComputerName -eq 'dc' -and $Credential -eq $testcred}      
-            $result = Get-ADSchemaClass -Class User -ComputerName dc -Credential $testcred
+            Mock -ModuleName ADSchema FindAllClasses {} -Verifiable -ParameterFilter {$ComputerName -eq 'dc' -and $Credential -eq $testcred}      
+            $result = Get-ADSchemaClass -Class 'User' -ComputerName 'dc' -Credential $testcred
 
             It "calls FindAllClasses" {
                 Assert-VerifiableMock

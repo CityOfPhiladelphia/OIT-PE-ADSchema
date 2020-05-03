@@ -47,7 +47,7 @@
 
 .EXAMPLE
    $oid = New-ADSchemaTestOID
-   New-ADSchemaAttribute -Name as-favoriteColor -Description 'Favorite Color' -IsSingleValued $true -AttributeType String -AtributeID $oid
+   New-ADSchemaAttribute -Name as-favoriteColor -Description 'Favorite Color' -IsSingleValued $true -AttributeType String -AttributeID $oid
    
 .EXAMPLE
    $hash - Get-ADSchemaClass com*
@@ -56,37 +56,59 @@
 Function New-ADSchemaAttribute {
   [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'High')]
   param(
-    [Parameter(Mandatory, ValueFromPipelinebyPropertyName, ParameterSetName = 'basic')]
+    [Parameter(
+      Mandatory = $true,
+      ValueFromPipelinebyPropertyName = $true
+    )]
     [String]
     $Name,
 
-    [Parameter(Mandatory, ValueFromPipelinebyPropertyName, ParameterSetName = 'basic')]
+    [Parameter(
+      Mandatory = $true,
+      ValueFromPipelinebyPropertyName = $true,
+      ParameterSetName = 'basic'
+    )]
     [Alias('AdminDescription')]
     [String]
     $Description,
 
-    [Parameter(ValueFromPipelinebyPropertyName, ParameterSetName = 'basic')]
+    [Parameter(
+      ValueFromPipelinebyPropertyName = $true,
+      ParameterSetName = 'basic'
+    )]
     [Alias('SingleValued')]
     [Boolean]
     $IsSingleValued = $True,
 
-    [Parameter(Mandatory, ValueFromPipelinebyPropertyName, ParameterSetName = 'basic')]
+    [Parameter(
+      Mandatory = $true,
+      ValueFromPipelinebyPropertyName = $true,
+      ParameterSetName = 'basic'
+    )]
     [ValidateSet('String', 'StringOctet', 'DN', 'Int', 'GeneralizedTime', 'Boolean')]
     [String]
     $AttributeType ,
 
-    [Parameter(ValueFromPipelinebyPropertyName, ParameterSetName = 'basic')]
+    [Parameter(
+      ValueFromPipelinebyPropertyName = $true,
+      ParameterSetName = 'basic'
+    )]
     [Alias('OID')]
     [String]
     $AttributeID = (New-ADSchemaTestOID),
 
-    [Parameter(ValueFromPipelineByPropertyName, ParameterSetName = 'advanced')]
+    [Parameter(
+      Mandatory = $true,
+      ValueFromPipelineByPropertyName = $true,
+      ParameterSetName = 'advanced'
+    )]
     [String]
     $SchemaAttributeHashTable,
 
-    [Parameter()]
+    [Parameter(ValueFromPipelineByPropertyName = $true)]
     $ComputerName,
 
+    [Parameter(ValueFromPipelineByPropertyName = $true)]
     [ValidateNotNull()]
     [System.Management.Automation.PSCredential]
     [System.Management.Automation.Credential()]
@@ -137,18 +159,19 @@ Function New-ADSchemaAttribute {
       }
     }
            
-    $ConfirmationMessage = "$schemaPath. This cannot be undone"
-    $Caption = "Updating Active Directory Schema. Creating attribute $Name"
-
     if ($AttributeID.StartsWith('1.2.840.113556.1.8000.2554')) {
       Write-Warning 'You are using a test OID. For Production use, use an OID with your registered PEN. See help about_adschema for more details. ' 
     }
-       
+
+    # Complete the New-ADObject splat.
+    $NewADObjectParams['Name'] = $Name
+    $NewADObjectParams['Type'] = 'attributeSchema'
+    $NewADObjectParams['Path'] = $schemaPath
+    $NewADObjectParams['OtherAttributes'] = $attributes
+    
+    $ConfirmationMessage = "$schemaPath. This cannot be undone"
+    $Caption = "Updating Active Directory Schema. Creating attribute $Name"
     if ($PSCmdlet.ShouldProcess($ConfirmationMessage, $Caption)) {
-      $NewADObjectParams['Name'] = $Name
-      $NewADObjectParams['Type'] = 'attributeSchema'
-      $NewADObjectParams['Path'] = $schemaPath
-      $NewADObjectParams['OtherAttributes'] = $attributes
       New-ADObject @NewADObjectParams 
     }
   }
