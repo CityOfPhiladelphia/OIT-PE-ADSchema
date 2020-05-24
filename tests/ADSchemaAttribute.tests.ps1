@@ -2,7 +2,16 @@ InModuleScope ADSchema {
     Describe "ADSchema Attribute Functions" {
         $password = ConvertTo-SecureString "TestPassword" -AsPlainText -Force
         $testcred = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList ('testuser',$password)
-        Mock -ModuleName ADSchema -Command Get-ADRootDSE { @{schemaNamingContext = 'CN=Schema,CN=Configuration,DC=example,DC=com'} }
+        $attributes = @{
+            lDAPDisplayName  = 'as-FavoriteColor'
+            attributeId      = '1.2.840.113556.1.8000.2554.64653.53965'
+            oMSyntax         = 20
+            attributeSyntax  = '2.5.5.4'
+            isSingleValued   = $true
+            adminDescription = 'Favorite Color'
+            searchflags      = 1
+        }
+        Mock -ModuleName ADSchema -Command Get-ADRootDSE { @{ schemaNamingContext = 'CN=Schema,CN=Configuration,DC=example,DC=com' } }
         Mock -ModuleName ADSchema -Command Write-Warning {}
 
         It "Get-ADSchemaAttribute exists as a function in the module" {
@@ -18,8 +27,8 @@ InModuleScope ADSchema {
         }
 
         Context "Get-ADSchemaAttribute without credentials" {  
-            Mock -ModuleName ADSchema -Command FindClassMandatoryProps {} -Verifiable -ParameterFilter {$Class -eq 'User'}
-            Mock -ModuleName ADSchema -Command FindClassOptionalProps {} -Verifiable -ParameterFilter {$Class -eq 'User'}  
+            Mock -ModuleName ADSchema -Command FindClassMandatoryProps {} -Verifiable -ParameterFilter { $Class -eq 'User' }
+            Mock -ModuleName ADSchema -Command FindClassOptionalProps {} -Verifiable -ParameterFilter { $Class -eq 'User' }  
             $result = Get-ADSchemaAttribute -Class User -Attribute CN
 
             It "calls FindClassMandatoryProps and FindClassOptionalProps" {
@@ -28,8 +37,8 @@ InModuleScope ADSchema {
         }
 
         Context "Get-ADSchemaAttribute with ComputerName and Credential" {
-            Mock -ModuleName ADSchema -Command FindClassMandatoryProps {} -Verifiable -ParameterFilter {$Class -eq 'User' -and $ComputerName -eq 'dc' -and $Credential -eq $testcred}
-            Mock -ModuleName ADSchema -Command FindClassOptionalProps {} -Verifiable -ParameterFilter {$Class -eq 'User' -and $ComputerName -eq 'dc' -and $Credential -eq $testcred}
+            Mock -ModuleName ADSchema -Command FindClassMandatoryProps {} -Verifiable -ParameterFilter { $Class -eq 'User' -and $ComputerName -eq 'dc' -and $Credential -eq $testcred }
+            Mock -ModuleName ADSchema -Command FindClassOptionalProps {} -Verifiable -ParameterFilter { $Class -eq 'User' -and $ComputerName -eq 'dc' -and $Credential -eq $testcred }
             $result = Get-ADSchemaAttribute -Class User -Attribute CN -ComputerName dc -Credential $testcred
 
             It "calls FindClassMandatoryProps and FindClassOptionalProps" {
@@ -38,7 +47,7 @@ InModuleScope ADSchema {
         }
 
         Context "New-ADSchemaAttribute without credentials" {
-            Mock -ModuleName ADSchema -Command New-ADObject {} -Verifiable -ParameterFilter {$Name -eq 'as-favoriteColor' -and $Description -eq 'Favorite Color' -and $IsSingleValued -eq $true -and $AttributeType -eq 'String' -and $AttributeID -eq '1.2.840.113556.1.8000.2554.64653.53965'}
+            Mock -ModuleName ADSchema -Command New-ADObject {} -Verifiable -ParameterFilter { $Name -eq 'as-favoriteColor' -and $Type -eq 'attributeSchema' -and $Path -eq 'CN=Schema,CN=Configuration,DC=example,DC=com' -and $OtherAttributes -eq $attributes }
             $result = New-ADSchemaAttribute -Name 'as-favoriteColor' -Description 'Favorite Color' -IsSingleValued $true -AttributeType 'String' -AttributeID '1.2.840.113556.1.8000.2554.64653.53965' -Confirm:$false
 
             It "creates a new AD object" {
@@ -47,7 +56,7 @@ InModuleScope ADSchema {
         }
 
         Context "New-ADSchemaAttribute with ComputerName and Credential" {
-            Mock -ModuleName ADSchema -Command New-ADObject {} -Verifiable -ParameterFilter {$Name -eq 'as-favoriteColor' -and $Description -eq 'Favorite Color' -and $IsSingleValued -eq $true -and $AttributeType -eq 'String' -and $AttributeID -eq '1.2.840.113556.1.8000.2554.64653.53965' -and $ComputerName -eq 'dc' -and $Credential -eq $testcred}
+            Mock -ModuleName ADSchema -Command New-ADObject {} -Verifiable -ParameterFilter { $Name -eq 'as-favoriteColor' -and $Type -eq 'attributeSchema' -and $Path -eq 'CN=Schema,CN=Configuration,DC=example,DC=com' -and $OtherAttributes -eq $attributes -and $ComputerName -eq 'dc' -and $Credential -eq $testcred }
             $result = New-ADSchemaAttribute -Name 'as-favoriteColor' -Description 'Favorite Color' -IsSingleValued $true -AttributeType 'String' -AttributeID '1.2.840.113556.1.8000.2554.64653.53965' -ComputerName 'dc' -Credential $testcred -Confirm:$false
 
             It "creates a new AD object" {
@@ -56,7 +65,7 @@ InModuleScope ADSchema {
         }
 
         Context "New-ADSchemaAttribute ShouldProcess" {
-            Mock -ModuleName ADSchema -Command New-ADObject {} -Verifiable -ParameterFilter {$Name -eq 'as-favoriteColor' -and $Description -eq 'Favorite Color' -and $IsSingleValued -eq $true -and $AttributeType -eq 'String' -and $AttributeID -eq '1.2.840.113556.1.8000.2554.64653.53965'}
+            Mock -ModuleName ADSchema -Command New-ADObject {} -Verifiable -ParameterFilter { $Name -eq 'as-favoriteColor' -and $Type -eq 'attributeSchema' -and $Path -eq 'CN=Schema,CN=Configuration,DC=example,DC=com' -and $OtherAttributes -eq $attributes }
             $result = New-ADSchemaAttribute -Name 'as-favoriteColor' -Description 'Favorite Color' -IsSingleValued $true -AttributeType 'String' -AttributeID '1.2.840.113556.1.8000.2554.64653.53965' -WhatIf
             
             It "does not creates a new AD object" {
@@ -65,8 +74,8 @@ InModuleScope ADSchema {
         }
 
         Context "Add-ADSchemaAttributeToClass without credentials" {
-            Mock -ModuleName ADSchema -Command Get-ADObject {}
-            Mock -ModuleName ADSchema -Command Set-ADObject {}# -ParameterFilter {$Add -eq @{ mayContain = 'as-favoriteColor' }}
+            Mock -ModuleName ADSchema -Command Get-ADObject { @{ DistinguishedName = 'CN=User,CN=Schema,CN=Configuration,DC=example,DC=com' } }
+            Mock -ModuleName ADSchema -Command Set-ADObject {}
             $result = Add-ADSchemaAttributeToClass -Attribute 'as-favoriteColor' -Class 'User'
 
             It "adds an attribute to a class" {               
@@ -75,7 +84,7 @@ InModuleScope ADSchema {
         }
 
         Context "Add-ADSchemaAttributeToClass with ComputerName and Credential" {
-            Mock -ModuleName ADSchema -Command Get-ADObject {}
+            Mock -ModuleName ADSchema -Command Get-ADObject { @{ DistinguishedName = 'CN=User,CN=Schema,CN=Configuration,DC=example,DC=com' } }
             Mock -ModuleName ADSchema -Command Set-ADObject {} -Verifiable -ParameterFilter {$ComputerName -eq 'dc' -and $Credential -eq $testcred}
 
             It "adds an attribute to a class" {
