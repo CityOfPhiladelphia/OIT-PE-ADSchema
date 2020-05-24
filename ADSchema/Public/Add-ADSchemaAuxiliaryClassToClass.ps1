@@ -56,7 +56,7 @@ Function Add-ADSchemaAuxiliaryClassToClass {
     if ($Credential -ne [System.Management.Automation.PSCredential]::Empty) {
         $ADRootDSEParams['Credential'] = $Credential
         $GetADObjectParams1['Credential'] = $Credential
-        $GetADObjectParams2['ComputerName'] = $ComputerName
+        $GetADObjectParams2['Server'] = $ComputerName
         $SetADObjectParams['Credential'] = $Credential
     }
     # Get the schema path
