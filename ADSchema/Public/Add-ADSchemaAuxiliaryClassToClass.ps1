@@ -70,7 +70,7 @@ Function Add-ADSchemaAuxiliaryClassToClass {
 
     # Get the class the auxiliary class will be added to
     $GetADObjectParams2['SearchBase'] = $schemaPath
-    $GetADObjectParams2['Filter'] = "name -eq '$AuxiliaryClass'"
+    $GetADObjectParams2['Filter'] = "name -eq '$Class'"
     $classToAddTo = Get-ADObject @GetADObjectParams2
 
     # Add the auxiliary class to the class

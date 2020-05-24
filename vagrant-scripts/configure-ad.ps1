@@ -70,12 +70,24 @@ $SetAdministratorUser = @{
 }
 Set-ADUser @SetAdministratorUser    
 
-# Add vagrant to Domain Admins
+# Add vagrant to Domain Admins, Enterprise Admins, and Schema Admins
 $AddDomainAdmin = @{
     Identity = 'Domain Admins'
     Members = "CN=vagrant,$usersAdPath"
 }
 Add-ADGroupMember @AddDomainAdmin
+
+$AddEnterpriseAdmin = @{
+    Identity = 'Enterprise Admins'
+    Members = "CN=vagrant,$usersAdPath"
+}
+Add-ADGroupMember @AddEnterpriseAdmin
+
+$AddSchemaAdmin = @{
+    Identity = 'Schema Admins'
+    Members = "CN=vagrant,$usersAdPath"
+}
+Add-ADGroupMember @AddSchemaAdmin
 
 Write-Output 'vagrant Group Membership'
 Get-ADPrincipalGroupMembership -Identity 'vagrant' |

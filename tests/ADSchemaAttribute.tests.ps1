@@ -6,11 +6,15 @@ InModuleScope ADSchema {
         Mock -ModuleName ADSchema -Command Write-Warning {}
 
         It "Get-ADSchemaAttribute exists as a function in the module" {
-            (Get-Command Get-ADSchemaAttribute).count | should be 1
+            (Get-Command Get-ADSchemaAttribute).Count | Should Be 1
         }
 
         It "New-ADSchemaAttribute exists as a function in the module" {
-            (Get-Command New-ADSchemaAttribute).count | should be 1
+            (Get-Command New-ADSchemaAttribute).Count | Should Be 1
+        }
+
+        It "Add-ADSchemaAttributeToClass exists as a function in the module" {
+            (Get-Command Add-ADSchemaAttributeToClass).Count | Should Be 1
         }
 
         Context "Get-ADSchemaAttribute without credentials" {  
@@ -53,10 +57,30 @@ InModuleScope ADSchema {
 
         Context "New-ADSchemaAttribute ShouldProcess" {
             Mock -ModuleName ADSchema -Command New-ADObject {} -Verifiable -ParameterFilter {$Name -eq 'as-favoriteColor' -and $Description -eq 'Favorite Color' -and $IsSingleValued -eq $true -and $AttributeType -eq 'String' -and $AttributeID -eq '1.2.840.113556.1.8000.2554.64653.53965'}
+            $result = New-ADSchemaAttribute -Name 'as-favoriteColor' -Description 'Favorite Color' -IsSingleValued $true -AttributeType 'String' -AttributeID '1.2.840.113556.1.8000.2554.64653.53965' -WhatIf
             
             It "does not creates a new AD object" {
-                $result = New-ADSchemaAttribute -Name 'as-favoriteColor' -Description 'Favorite Color' -IsSingleValued $true -AttributeType 'String' -AttributeID '1.2.840.113556.1.8000.2554.64653.53965' -WhatIf
                 Assert-MockCalled -CommandName 'New-ADObject' -Exactly -Times 0
+            }
+        }
+
+        Context "Add-ADSchemaAttributeToClass without credentials" {
+            Mock -ModuleName ADSchema -Command Get-ADObject {}
+            Mock -ModuleName ADSchema -Command Set-ADObject {}# -ParameterFilter {$Add -eq @{ mayContain = 'as-favoriteColor' }}
+            $result = Add-ADSchemaAttributeToClass -Attribute 'as-favoriteColor' -Class 'User'
+
+            It "adds an attribute to a class" {               
+                Assert-MockCalled -CommandName 'Set-ADObject' -Times 1
+            }
+        }
+
+        Context "Add-ADSchemaAttributeToClass with ComputerName and Credential" {
+            Mock -ModuleName ADSchema -Command Get-ADObject {}
+            Mock -ModuleName ADSchema -Command Set-ADObject {} -Verifiable -ParameterFilter {$ComputerName -eq 'dc' -and $Credential -eq $testcred}
+
+            It "adds an attribute to a class" {
+                $result = Add-ADSchemaAttributeToClass -Attribute 'as-favoriteColor' -Class 'User' -ComputerName 'dc' -Credential $testcred
+                Assert-VerifiableMock
             }
         }
     }

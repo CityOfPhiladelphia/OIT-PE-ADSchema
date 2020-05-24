@@ -52,13 +52,12 @@ Function Add-ADSchemaAttributeToClass {
         $GetADObjectParams['Credential'] = $Credential
         $SetADObjectParams['Credential'] = $Credential
     }
-
     $schemaPath = (Get-ADRootDSE @ADRootDSEParams).schemaNamingContext
 
     $GetADObjectParams['SearchBase'] = $schemaPath
     $GetADObjectParams['Filter'] = "name -eq '$Class'"
     $Schema = Get-ADObject @GetADObjectParams
 
-    $SetADObjectParams['Add'] = @{mayContain = $Attribute }
+    $SetADObjectParams['Add'] = @{ mayContain = $Attribute }
     $Schema | Set-ADObject @SetADObjectParams
 }
